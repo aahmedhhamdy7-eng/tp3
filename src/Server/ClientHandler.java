@@ -1,33 +1,37 @@
 package Server;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
+import common.Operation;
 public class ClientHandler extends Thread {
-    private final Socket s;
-    private final int n;
+    private Socket socket;
 
-    public ClientHandler(Socket s, int n) {
-        this.s = s;
-        this.n = n;
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
     }
 
     public void run() {
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-            out.println("Vous etes le client numero " + n);
+            while (true) {
+                Operation o = (Operation) in.readObject();
+                if (o.op == 'q') break;
 
-            String ligne;
-            while ((ligne = in.readLine()) != null) {
-                System.out.println("Client n" + n + " : " + ligne);
-                out.println("Echo : " + ligne);
+
+                if (o.op == '+') o.resultat = o.a + o.b;
+                else if (o.op == '-') o.resultat = o.a - o.b;
+                else if (o.op == '*') o.resultat = o.a * o.b;
+                else if (o.op == '/') o.resultat = o.a / o.b;
+                int total = Serveur.incrementer();
+                System.out.println(o.a + " " + o.op + " " + o.b + " = " + o.resultat
+                        + "   | Opérations traitées : " + total);
+
+                out.writeObject(o);
             }
-            s.close();
-        } catch (IOException e) {
-            System.out.println("Client n" + n + " deconnecte");
+            socket.close();
+        } catch (Exception e) {
+            System.out.println("Client déconnecté");
         }
     }
 }

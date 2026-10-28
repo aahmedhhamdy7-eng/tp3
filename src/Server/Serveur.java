@@ -1,33 +1,21 @@
 package Server;
-
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 public class Serveur {
+    private static int compteur = 0;
+    public static synchronized int incrementer() {
+        compteur++;
+        return compteur;
+    }
 
+    public static void main(String[] args) throws Exception {
+        ServerSocket serveur = new ServerSocket(1234);
+        System.out.println("Serveur démarré sur le port 1234...");
 
-
-    public static void main(String[] args) {
-        int numeroClient = 0;
-
-        try (ServerSocket serverSocket = new ServerSocket(1234)) {
-            System.out.println( " - en attente de clients...");
-
-            while (true) {
-                Socket socket = serverSocket.accept();   // bloquant jusqu'a une connexion
-                numeroClient++;
-
-                // Adresse IP + port du client
-                System.out.println("Client n" + numeroClient + " connecte : "
-                        + socket.getRemoteSocketAddress());
-
-                // Un thread dedie par client
-                new ClientHandler(socket, numeroClient).start();
-            }
-        } catch (IOException e) {
-            System.err.println("Erreur serveur : " + e.getMessage());
+        while (true) {
+            Socket socket = serveur.accept();          // attend un client
+            System.out.println("Nouveau client connecté");
+            new ClientHandler(socket).start();         // un thread par client
         }
     }
 }
